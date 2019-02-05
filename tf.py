@@ -27,6 +27,8 @@ class Actor:
             loss='mse',
             metrics=['accuracy'])
 
+        self.random_offset = 1
+
 
     def action(self, observation):
         # result = self.model.predict(np.array([observation]))
@@ -37,13 +39,14 @@ class Actor:
         left = self.q.predict(np.array([np.append(observation,0)]))[0][0]
         right = self.q.predict(np.array([np.append(observation,1)]))[0][0]
 
-        left += np.random.random() * .1
-        right += np.random.random() * .1
+        left += np.random.random() * self.random_offset
+        right += np.random.random() * self.random_offset
 
         # print(left, right)
         return 0 if left > right else 1
 
     def learn(self, histories):
+        self.random_offset *= 0.5
         print('--learning--')
         # print(histories)
         data = []
@@ -51,13 +54,15 @@ class Actor:
         for game in histories:
             final_reward = game[1]
             for i, state in enumerate(game[0]):
-                desired_q = (final_reward - i) / final_reward
+                desired_q = (final_reward - i) / final_reward  ## (final_reward - i) / (max_of_all_games)
+                if final_reward == 500:
+                    desired_q = 1
                 data.append(np.append(state[0], state[1]))
                 labels.append(desired_q)
 
         data = np.array(data)
         labels = np.array(labels)
-        self.q.fit(data, labels, epochs=30)
+        self.q.fit(data, labels, epochs=20)
 
         # input()
 
@@ -82,7 +87,7 @@ def render(bot, env):
 
         if done:
             game_i += 1
-            print(i)
+            print(game_i, i)
             # print(current_match_history)
             all_matches_history.append((current_match_history, i))
             if game_i % 100 == 0: #train every n games
