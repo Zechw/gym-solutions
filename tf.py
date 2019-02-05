@@ -3,6 +3,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 import gym
+import pdb
 
 ## todo clean up copy-pasta, factor into exportable class
 
@@ -21,9 +22,9 @@ class Actor:
         self.q = tf.keras.models.Sequential()
         self.q.add(keras.layers.Dense(5))
         self.q.add(keras.layers.Dense(6, activation='sigmoid'))
-        self.q.add(keras.layers.Dense(1))
+        self.q.add(keras.layers.Dense(1, activation='sigmoid'))
 
-        self.q.compile(optimizer=tf.train.AdamOptimizer(0.001),
+        self.q.compile(optimizer=tf.train.AdamOptimizer(0.0001),
             loss='mse',
             metrics=['accuracy'])
 
@@ -39,11 +40,24 @@ class Actor:
         left = self.q.predict(np.array([np.append(observation,0)]))[0][0]
         right = self.q.predict(np.array([np.append(observation,1)]))[0][0]
 
-        left += np.random.random() * self.random_offset
-        right += np.random.random() * self.random_offset
+        left += (np.random.random() - 0.5) * self.random_offset
+        right += (np.random.random() - 0.5) * self.random_offset
 
         # print(left, right)
         return 0 if left > right else 1
+
+    def secondsToLive(self, state):
+
+        left_action = np.append(state,0)
+        left_action = np.expand_dims(left_action,axis=0)
+
+        right_action = left_action.copy()
+        right_action[:,4] = 1
+
+        left = self.q.predict( left_action )[0][0]
+        right = self.q.predict(right_action)[0][0]
+
+        return max(left,right)
 
     def learn(self, histories):
         self.random_offset *= 0.5
@@ -52,14 +66,39 @@ class Actor:
         data = []
         labels = []
         for game in histories:
-            final_reward = game[1]
-            for i, state in enumerate(game[0]):
-                desired_q = (final_reward - i) / 500  ## (final_reward - i) / (max_of_all_games)
-                if final_reward == 500:
-                    desired_q = 1
-                data.append(np.append(state[0], state[1]))
-                labels.append(desired_q)
+            survive_time = game[1]
+            state_actions = game[0]
+            won = survive_time == 500
+            look_ahead_time = 20
 
+            if survive_time > 500-look_ahead_time:
+                state_actions = state_actions[-20:]
+
+            print('debug')
+            print(survive_time)
+
+
+            for i, state_action in enumerate(state_actions):
+
+                state = state_action[0]
+                action = state_action[1]
+
+                print(self.secondsToLive(state))
+                if i < survive_time-1:
+                    step_reward = 1
+
+                    step_reward += look_ahead_time*self.secondsToLive(state_actions[i+1][0])
+                else:
+                    if won:
+                        step_reward = 1
+                        step_reward += look_ahead_time*self.secondsToLive(state_actions[i+1][0])
+                    else:
+                        step_reward = 0
+
+                data.append(np.append(state[0], state[1]))
+                labels.append(step_reward)
+
+            print(labels)
         data = np.array(data)
         labels = np.array(labels)
         self.q.fit(data, labels, epochs=50)
@@ -90,7 +129,7 @@ def render(bot, env):
             print(game_i, i)
             # print(current_match_history)
             all_matches_history.append((current_match_history, i))
-            if game_i % 100 == 0: #train every n games
+            if game_i % 10 == 0: #train every n games
                 bot.learn(all_matches_history)
                 all_matches_history = []
 
