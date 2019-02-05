@@ -54,7 +54,7 @@ class Actor:
         for game in histories:
             final_reward = game[1]
             for i, state in enumerate(game[0]):
-                desired_q = (final_reward - i) / final_reward  ## (final_reward - i) / (max_of_all_games)
+                desired_q = (final_reward - i) / 500  ## (final_reward - i) / (max_of_all_games)
                 if final_reward == 500:
                     desired_q = 1
                 data.append(np.append(state[0], state[1]))
@@ -62,7 +62,7 @@ class Actor:
 
         data = np.array(data)
         labels = np.array(labels)
-        self.q.fit(data, labels, epochs=20)
+        self.q.fit(data, labels, epochs=50)
 
         # input()
 
@@ -93,8 +93,6 @@ def render(bot, env):
             if game_i % 100 == 0: #train every n games
                 bot.learn(all_matches_history)
                 all_matches_history = []
-
-            # print(current_match_history)
 
             current_match_history = []
 
