@@ -9,7 +9,7 @@ class TensorActor(Actor):
         self.net = tf.keras.models.Sequential()
         self.net.add(keras.layers.Dense(3, input_shape=(5,), activation='sigmoid'))
         self.net.add(keras.layers.Dense(1))
-        self.max_steps = 1
+        self.high_score = 1
 
         self.net.compile(optimizer=tf.train.AdamOptimizer(0.001),
             loss='mse',
@@ -19,8 +19,8 @@ class TensorActor(Actor):
         left = self.net.predict(np.array([np.append(observation,0)]))[0][0]
         right = self.net.predict(np.array([np.append(observation,1)]))[0][0]
 
-        left += (np.random.random()-0.5) * 0.2 / self.max_steps
-        right += (np.random.random()-0.5) * 0.2 / self.max_steps
+        left += (np.random.random()-0.5) * 0.2 / self.high_score
+        right += (np.random.random()-0.5) * 0.2 / self.high_score
 
         return 0 if left > right else 1
 
@@ -41,9 +41,9 @@ class TensorActor(Actor):
         labels = []
         for game in self.game_history:
             steps_alive = len(game.rewards)
-            self.max_steps = 1
-            if steps_alive > self.max_steps:
-                self.max_steps = steps_alive
+            self.high_score = 1
+            if steps_alive > self.high_score:
+                self.high_score = steps_alive
             if steps_alive == 500 and i > 450:
                 continue # max score, train on all but the end
             for i, observation in enumerate(game.observations):
