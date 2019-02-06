@@ -44,8 +44,8 @@ class TensorActor(Actor):
             self.high_score = 1
             if steps_alive > self.high_score:
                 self.high_score = steps_alive
-            if steps_alive == 500 and i > 450:
-                continue # max score, train on all but the end
+            if steps_alive == 500:
+                continue # max score, don't train
             for i, observation in enumerate(game.observations):
                 reward = min(1, (steps_alive - i)/steps_alive)
 

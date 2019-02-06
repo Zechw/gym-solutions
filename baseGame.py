@@ -26,13 +26,13 @@ class Game:
         for i in range(max_steps):
             action = actor.action(observation)
             old_observation = observation
-            observation, reward, done, info =self. env.step(action)
+            observation, reward, done, info = self. env.step(action)
             self.recordStep(old_observation, action, reward)
             if render:
                 self.env.render()
             if done:
                 actor.on_game_end(self)
-                print(i)
+                print(i+1)
                 return
 
     def recordStep(self, observation, action, reward):
