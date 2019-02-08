@@ -22,7 +22,7 @@ class TensorActor(Actor):
             metrics=['accuracy'])
 
     def action(self, observation):
-        if np.random.random() > min(0.75, self.high_score / 195): #random factor up to solved value
+        if np.random.random() > min(0.75, self.high_score / 500): #random factor up to solved value
             return 0 if np.random.random() > 0.5 else 1
         left = self.fire(observation, 0)
         right = self.fire(observation, 1)
@@ -40,8 +40,8 @@ class TensorActor(Actor):
             if len(self.game_history) >= 100:
                 avg = sum([len(g.rewards) for g in self.game_history[-100:]])/100
                 print(i+1, "\t", len(game.rewards), "\t", avg)
-                if avg >= 195:
-                    raise Exception('You win!')
+                # if avg >= 195:
+                #     raise Exception('You win!')
             else:
                 print(i+1, "\t", len(game.rewards))
             if i % self.round_batch_size == 0:
@@ -54,9 +54,9 @@ class TensorActor(Actor):
         self.high_score = max([len(g.rewards) for g in self.game_history])
         for game_i, game in enumerate(self.game_history):
             max_steps = len(game.rewards)
+            if max_steps > 490:
+                continue
             for step_i, observation in enumerate(game.observations):
-                if max_steps == 500 and step_i > 450:
-                    continue # max score, don't train on the end
                 reward = self.reward_function(game, game_i, step_i, max_steps)
 
                 inputs.append(np.append(observation, game.actions[step_i]))
