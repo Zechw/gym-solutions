@@ -4,11 +4,11 @@ class Actor:
     def __init__(self):
         pass
 
-        def action(self, observation):
-            pass ## IMPLEMENT ME! ##
+    def action(self, observation):
+        pass ## IMPLEMENT ME! ##
 
-        def onGameEnd(self, game):
-            pass ## IMPLEMENT ME! ##
+    def on_game_end(self, game):
+        pass ## IMPLEMENT ME! ##
 
 
 class Game:

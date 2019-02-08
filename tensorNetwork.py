@@ -15,7 +15,6 @@ class TensorActor(Actor):
     def build_net(self):
         self.net = tf.keras.models.Sequential()
         self.net.add(keras.layers.Dense(3, input_shape=(5,), activation='sigmoid'))
-        # self.net.add(keras.layers.GaussianNoise(1))
         self.net.add(keras.layers.Dense(1))
 
         self.net.compile(optimizer=tf.train.AdamOptimizer(0.001),
@@ -38,7 +37,13 @@ class TensorActor(Actor):
             i += 1
             game = Game()
             game.run(self, True)
-            print(i+1, "\t", len(game.rewards))
+            if len(self.game_history) >= 100:
+                avg = sum([len(g.rewards) for g in self.game_history[-100:]])/100
+                print(i+1, "\t", len(game.rewards), "\t", avg)
+                if avg >= 195:
+                    raise Exception('You win!')
+            else:
+                print(i+1, "\t", len(game.rewards))
             if i % self.round_batch_size == 0:
                 self.train()
 

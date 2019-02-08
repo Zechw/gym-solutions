@@ -6,8 +6,10 @@ class QActor(TensorActor):
         super(QActor, self).__init__() # Python 2
         # change settings here
         self.max_memory_size = 300
-        self.round_batch_size = 30
-        self.traning_epochs = 80
+        self.round_batch_size = 50
+        self.traning_epochs = 50
+
+        self.discount_factor = 0.5
 
     def reward_function(self, game, game_i, step_i, max_steps):
         # current reward is survivability. final reward is death
@@ -17,7 +19,7 @@ class QActor(TensorActor):
             q_left = self.fire(next_state, 0)
             q_right = self.fire(next_state, 1)
             r = ((max_steps - step_i)/max_steps)
-            return r + max(q_left, q_right)
+            return r + self.discount_factor * max(q_left, q_right)
         except IndexError as e: #at the end
             return 0
 
