@@ -32,7 +32,6 @@ class Game:
                 self.env.render()
             if done:
                 actor.on_game_end(self)
-                print(i+1)
                 return
 
     def recordStep(self, observation, action, reward):
