@@ -8,7 +8,6 @@ class TensorActor(Actor):
         self.round_batch_size = 100
         self.traning_epochs = 30
         self.max_memory_size = 500
-        self.high_score = 1
         self.game_history = []
         self.build_net()
 
@@ -22,7 +21,8 @@ class TensorActor(Actor):
             metrics=['accuracy'])
 
     def action(self, observation):
-        if np.random.random() > min(0.75, self.high_score / 500): #random factor up to solved value
+        high_score = max([len(g.rewards) for g in self.game_history[-100:]]) if len(self.game_history) > 0 else 0
+        if np.random.random() > min(0.75, high_score / 500): #random factor up to solved value
             return 0 if np.random.random() > 0.5 else 1
         left = self.fire(observation, 0)
         right = self.fire(observation, 1)
@@ -36,14 +36,11 @@ class TensorActor(Actor):
         while True:
             i += 1
             game = Game()
-            game.run(self, True)
-            if len(self.game_history) >= 100:
-                avg = sum([len(g.rewards) for g in self.game_history[-100:]])/100
-                print(i+1, "\t", len(game.rewards), "\t", avg)
-                # if avg >= 195:
-                #     raise Exception('You win!')
-            else:
-                print(i+1, "\t", len(game.rewards))
+            game.run(self, False)
+            avg = self.avg_last_n_games(100)
+            print(i+1, "\t", len(game.rewards), "\t", avg)
+            # if avg >= 195 and len(self.game_history) >= 100:
+            #     raise Exception('You win!')
             if i % self.round_batch_size == 0:
                 self.train()
 
@@ -51,7 +48,6 @@ class TensorActor(Actor):
         inputs = []
         desired_outpus = []
         print('--training--')
-        self.high_score = max([len(g.rewards) for g in self.game_history])
         for game_i, game in enumerate(self.game_history):
             max_steps = len(game.rewards)
             if max_steps > 490:
@@ -69,6 +65,9 @@ class TensorActor(Actor):
 
     def reward_function(self, game, game_i, step_i, max_steps):
         return (max_steps - step_i)/max_steps
+
+    def avg_last_n_games(self, n):
+        return sum([len(g.rewards) for g in self.game_history[-n:]])/n
 
     def on_game_end(self, game):
         self.game_history.append(game)
