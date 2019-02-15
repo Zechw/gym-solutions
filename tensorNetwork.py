@@ -8,6 +8,7 @@ class TensorActor(Actor):
         self.round_batch_size = 100
         self.traning_epochs = 30
         self.max_memory_size = 500
+        self.max_possible_score = 500
         self.game_history = []
         self.build_net()
 
@@ -22,7 +23,7 @@ class TensorActor(Actor):
 
     def action(self, observation):
         high_score = max([len(g.rewards) for g in self.game_history[-100:]]) if len(self.game_history) > 0 else 0
-        if np.random.random() > min(0.75, high_score / 500): #random factor up to solved value
+        if np.random.random() > min(0.75, high_score / self.max_possible_score): #random factor up to solved value
             return 0 if np.random.random() > 0.5 else 1
         left = self.fire(observation, 0)
         right = self.fire(observation, 1)
@@ -31,11 +32,14 @@ class TensorActor(Actor):
     def fire(self, observation, action):
         return self.net.predict(np.array([np.append(observation,action)]))[0][0]
 
+    def getNewGame(self):
+        return Game()
+
     def run(self):
         i = 0
         while True:
             i += 1
-            game = Game()
+            game = self.getNewGame()
             game.run(self, False)
             avg = self.avg_last_n_games(100)
             print(i+1, "\t", len(game.rewards), "\t", avg)
@@ -50,7 +54,7 @@ class TensorActor(Actor):
         print('--training--')
         for game_i, game in enumerate(self.game_history):
             max_steps = len(game.rewards)
-            if max_steps > 490:
+            if max_steps > self.max_possible_score - 20:
                 continue
             for step_i, observation in enumerate(game.observations):
                 reward = self.reward_function(game, game_i, step_i, max_steps)
