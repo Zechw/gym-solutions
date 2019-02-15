@@ -10,9 +10,19 @@ class Actor:
     def on_game_end(self, game):
         pass ## IMPLEMENT ME! ##
 
+class GameFactory:
+    def __init__(self):
+        self.existing_env = {}
+
+    def get_env(self, name):
+        if name not in self.existing_env:
+            self.existing_env[name] = gym.make(name)
+        e = self.existing_env[name]
+        return Game(e)
+
 
 class Game:
-    def __init__(self, env=gym.make('CartPole-v1')):
+    def __init__(self, env):
         self.env = env
 
     def reset(self):

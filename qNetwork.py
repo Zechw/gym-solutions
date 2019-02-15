@@ -4,24 +4,32 @@ class QActor(TensorActor):
     def __init__(self):
         # super().__init__() # Python 3
         super(QActor, self).__init__() # Python 2
-        # change settings here
         self.max_memory_size = 300
-        self.round_batch_size = 50
-        self.traning_epochs = 50
-
         self.discount_factor = 0.5
 
     def reward_function(self, game, game_i, step_i, max_steps):
-        # current reward is survivability. final reward is death
         # q = r + γQ∗(s', a')
         try:
-            next_state = game.observations[step_i+1]
-            q_left = self.fire(next_state, 0)
-            q_right = self.fire(next_state, 1)
-            r = ((max_steps - step_i)/max_steps)
-            return r + self.discount_factor * max(q_left, q_right)
+            next_observation = game.observations[step_i+1]
+            _, max_q = self.score_actions(next_observation)
+            r = self.current_reward(game, game_i, step_i, max_steps)
+            return r + self.discount_factor * max_q
         except IndexError as e: #at the end
             return 0
 
-actor = QActor()
-actor.run()
+    def current_reward(self, game, game_i, step_i, max_steps):
+        raise Exception('IMPLEMENT')
+
+    def score_actions(self, observation):
+        max_q = None
+        max_action = None
+        for action in self.get_discrete_actions():
+            q = self.fire(observation, action)[0]
+            if max_q is None or q > max_q:
+                max_q = q
+                max_action = action
+        return max_action, max_q
+
+    def get_best_action(self, observation):
+        max_action, _ = self.score_actions(observation)
+        return max_action
