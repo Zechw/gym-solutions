@@ -79,6 +79,7 @@ class QMountainActor(QActor):
     def build_net(self):
         self.net = tf.keras.models.Sequential()
         self.net.add(keras.layers.Dense(4, input_shape=(3,), activation='relu'))
+        self.net.add(keras.layers.Dense(2, activation='sigmoid'))
         self.net.add(keras.layers.Dense(1))
 
         self.net.compile(optimizer=tf.train.AdamOptimizer(0.001),
@@ -86,7 +87,7 @@ class QMountainActor(QActor):
             metrics=['accuracy'])
 
     def current_reward(self, game, game_i, step_i, max_steps):
-        return 1+game.observations[step_i][0] if step_i > 0 and game.observations[step_i][0] > max([o[0] for o in game.observations[:step_i]]) else 0
+        return 1 if step_i > 0 and game.observations[step_i][0] > max([o[0] for o in game.observations[:step_i]]) else 0
         #only give reward if new rightmost score
 
         # is (not first move and) farther right than last step
