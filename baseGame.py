@@ -17,8 +17,7 @@ class GameFactory:
     def get_env(self, name):
         if name not in self.existing_env:
             self.existing_env[name] = gym.make(name)
-        e = self.existing_env[name]
-        return Game(e)
+        return Game(self.existing_env[name])
 
 
 class Game:

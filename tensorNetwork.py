@@ -1,3 +1,4 @@
+import random
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
@@ -35,7 +36,7 @@ class TensorActor(Actor):
     def action(self, observation):
         high_score = self.high_score()
         if np.random.random() > min(0.75, high_score / self.max_possible_score): #random factor up to solved value
-            return 0 if np.random.random() > 0.5 else 1
+            return random.choice(self.get_discrete_actions())
 
         best_action = self.get_best_action(observation)
         return best_action
@@ -65,8 +66,9 @@ class TensorActor(Actor):
         print('--training--')
         for game_i, game in enumerate(self.game_history):
             max_steps = len(game.rewards)
-            if max_steps > self.max_possible_score - 20:
-                continue
+            # if max_steps > self.max_possible_score - 20:
+            #     # TODO make this off max frames, not score
+            #     continue
             for step_i, observation in enumerate(game.observations):
                 reward = self.reward_function(game, game_i, step_i, max_steps)
 
@@ -79,6 +81,7 @@ class TensorActor(Actor):
             self.net.fit(inputs, desired_outpus, epochs=self.traning_epochs)
 
     def high_score(self):
+        # TODO caching?
         window = -1 * self.high_score_reflection_window
         return  max([self.score_game(g) for g in self.game_history[window:]]) if len(self.game_history) > 0 else 0
 
